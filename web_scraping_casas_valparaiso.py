@@ -20,30 +20,21 @@ def data(url_principal):
 
 #Función para determinar la url de cada una de las ciudades de la RM
 def urls_por_ciudad(soup_principal):
-    #Lista de ciudades de la región de valparaíso
     ciudades = soup_principal.find('div', class_ = 'ui-search-search-modal-grid-columns')
-    #ciudades = soup_principal.find('a', class_ = 'ui-search-search-modal-filter ui-search-link')
     urls_x_ciudad = []
     for ciudad in ciudades:
-        #Se aplica unidecode para quitar acentos y se reemplazan los espacios de los nombres de las ciudades por - para obtener la url correspondiente
         nombre_ciudad = unidecode(ciudad.find('span', class_ = 'ui-search-search-modal-filter-name').text.replace(' ','-'))
-        #Se obtiene la url de cada una
         url_cada_ciudad = 'https://www.portalinmobiliario.com/venta/casa/propiedades-usadas/' + nombre_ciudad + '-valparaiso/_NoIndex_True'
         #Se genera una restricción para separar por filtro de precios si las páginas tienen mas de 2000 resultados
         soup_x_ciudad = data(url_cada_ciudad)
-        #La idea es extraer toda la data y no un máximo de 2000
         resultados_x_ciudad = soup_x_ciudad.find('span', class_ = 'ui-search-search-result__quantity-results shops-custom-secondary-font').text.replace('.','')
-        #Se extrae el número de la oración
         resultados = [int(x) for x in resultados_x_ciudad.split() if x.isdigit()]
-        #total = total + resultados[0]
         if resultados[0] > 2000:
-            #Se aplica otro filtro a las urls x ciudad, al cual se le agrega el precio
             ciudades_con_filtro = soup_x_ciudad.find_all('li', class_ = 'ui-search-money-picker__li')
             for city in ciudades_con_filtro:
                 url_casa_filtro = city.a['href']
                 urls_x_ciudad.append(url_casa_filtro)
         else:
-            #Se guardan las urls en esta variable
             urls_x_ciudad.append(url_cada_ciudad)
         
     return urls_x_ciudad
@@ -51,10 +42,8 @@ def urls_por_ciudad(soup_principal):
 #Función para obtener la página siguiente    
 def pag_sig(soup_principal):
     page_principal = soup_principal.find('ul', class_ = 'ui-search-pagination andes-pagination shops__pagination')
-    # Si no existe, es porque la pagina tiene menos de 50 ofertas o estamos en la última página
     if not page_principal or not page_principal.find('li', class_ = 'andes-pagination__button andes-pagination__button--next shops__pagination-button'):
         return
-    #Regresamos la url de la pagina siguiente
     else:
         url_principal = page_principal.find('li', class_ = 'andes-pagination__button andes-pagination__button--next shops__pagination-button').a['href']
         return url_principal
@@ -84,14 +73,9 @@ def variables(soup_principal):
 
     #Se reccore la raw data de cada casa
     for casa in casas:
-        #Se obtiene la url de cada casa
         url_cada_casa = casa.div.div.a['href']
-        #Mediante el Try se evita el error TooManyRedirects de páginas que no abren
-        try:
-            
+        try: 
             driver.get(url_cada_casa)
-            
-            #Este tiempo es porque aveces no alcanza a cargar la pagina y es necesario fijar un tiempo de espera
             content = driver.page_source.encode('utf-8').strip()
             soup = BeautifulSoup(content, 'lxml')
 
@@ -103,9 +87,6 @@ def variables(soup_principal):
             comuna = soup.find_all('a', class_ = 'andes-breadcrumb__link')
             comuna_x_casa = comuna[4].text
 
-            
-
-            #Se genera una nueva variable para posicionar la pantalla en donde esta la tabla
             wait = WebDriverWait(driver, 10)
             scroll = wait.until(EC.presence_of_element_located((By.CLASS_NAME, 'ui-pdp-specs__table')))
             driver.execute_script("arguments[0].scrollIntoView();",scroll)
@@ -193,7 +174,6 @@ def variables(soup_principal):
 
             descripcion = wait.until(EC.presence_of_element_located((By.CLASS_NAME, 'ui-pdp-description')))
             driver.execute_script("arguments[0].scrollIntoView();", descripcion)
-            #La descripción es separada en una lista de palabras
             palabras = (descripcion.text).split()
             
             for palabra in palabras:
@@ -212,8 +192,6 @@ def variables(soup_principal):
             
                 #Se define el encabezado por sección
                 encabezado = boton.text
-                
-                #Se mueve la pantalla para que carguen los datos al hacer click
                 driver.execute_script("arguments[0].scrollIntoView();",boton)
                 boton.click()
 
